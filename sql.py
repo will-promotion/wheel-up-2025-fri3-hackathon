@@ -275,3 +275,61 @@ def main() -> None:
 # ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     main()
+
+# ────────────────────────────────────────────────────────────────
+# Webアプリ用の関数
+# ────────────────────────────────────────────────────────────────
+
+def get_all_subjects():
+    """全ての科目を辞書のリストで返す（Webアプリ用）"""
+    with sqlite3.connect(_DB_PATH) as con:
+        cur = con.execute(
+            """
+            SELECT id, weekday, period, name, room,
+                   credits, teacher, evaluation, style,
+                   description, memo, ease
+            FROM subjects
+            ORDER BY weekday, period, id
+            """
+        )
+        rows = cur.fetchall()
+        
+        # 辞書のリストに変換
+        subjects = []
+        for row in rows:
+            subjects.append({
+                'id': row[0],
+                'day': row[1],  # weekdayをdayとして返す
+                'period': str(row[2]),  # periodを文字列として返す
+                'name': row[3],
+                'room': row[4],
+                'credits': row[5],
+                'teacher': row[6],
+                'evaluation': row[7],
+                'style': row[8],
+                'description': row[9],
+                'memo': row[10],
+                'ease': row[11]
+            })
+        return subjects
+
+def add_subject_web(name: str, day: str, period: str, room: str = "", **kwargs):
+    """科目を追加（Webアプリ用の簡易版）"""
+    try:
+        period_int = int(period)
+        return add_subject(day, period_int, name, room, **kwargs)
+    except ValueError:
+        raise ValueError("時限は数字で入力してください")
+
+def delete_subject(subject_id: int):
+    """科目を削除（Webアプリ用）"""
+    return delete_by_id(subject_id)
+
+def update_subject_time(subject_id: int, new_day: str, new_period: int):
+    """科目の時間を更新（Webアプリ用）"""
+    with sqlite3.connect(_DB_PATH) as con:
+        con.execute(
+            "UPDATE subjects SET weekday = ?, period = ? WHERE id = ?",
+            (new_day, new_period, subject_id)
+        )
+        return con.total_changes > 0
