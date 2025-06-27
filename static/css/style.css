@@ -1,0 +1,635 @@
+/* リセットCSS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #222;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    overflow-y: scroll; /* 常にスクロールバーを表示 */
+}
+
+/* アニメーション付きグラデーション */
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    25% {
+        background-position: 100% 50%;
+    }
+    50% {
+        background-position: 100% 100%;
+    }
+    75% {
+        background-position: 0% 100%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* モーダルが開いているときのbodyスタイル */
+body.modal-open {
+    overflow: hidden; /* スクロールを無効化 */
+    padding-right: 15px; /* スクロールバーの幅分のパディングを追加 */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ヘッダー */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 300;
+    letter-spacing: -0.5px;
+}
+
+header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* メインコンテンツ */
+main {
+    display: grid;
+    gap: 30px;
+}
+
+/* セクション共通スタイル */
+section {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+}
+
+section h2 {
+    color: #2d3748;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    border-bottom: 2px solid rgba(0, 122, 255, 0.3);
+    padding-bottom: 10px;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+}
+
+/* フォームスタイル */
+.add-form {
+    display: grid;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #2d3748;
+    font-size: 0.9rem;
+    letter-spacing: 0.2px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px;
+    border: 2px solid rgba(226, 232, 240, 0.6);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #007AFF;
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ボタンスタイル */
+.btn {
+    padding: 12px 24px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    background: #f8fafc;
+    color: #475569;
+    box-shadow: 0 2px 8px rgba(60, 60, 60, 0.06);
+    letter-spacing: 0.2px;
+}
+
+.btn-primary {
+    background: #e0f2fe;
+    color: #0c4a6e;
+    border: 1.5px solid #81d4fa;
+}
+
+.btn-primary:hover {
+    background: #b3e5fc;
+    color: #0c4a6e;
+    border: 1.5px solid #4fc3f7;
+}
+
+.btn-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1.5px solid #fca5a5;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+}
+
+.btn-danger:hover {
+    background: #fecaca;
+    color: #b91c1c;
+    border: 1.5px solid #f87171;
+}
+
+.btn-secondary {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1.5px solid #cbd5e1;
+}
+
+.btn-secondary:hover {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1.5px solid #94a3b8;
+}
+
+/* 時間割テーブル */
+.timetable-container {
+    overflow-x: auto;
+}
+
+.timetable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px 0 rgba(60, 60, 60, 0.08);
+    table-layout: fixed;
+}
+
+.timetable th,
+.timetable td {
+    padding: 16px;
+    text-align: center;
+    border: none;
+    width: 16.66%;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+.timetable th:first-child,
+.timetable td:first-child {
+    width: 16.66%;
+    font-weight: 600;
+}
+
+.timetable th {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1.5px solid #e2e8f0;
+}
+
+.timetable td {
+    background: #fafbfc;
+    transition: background 0.2s;
+    min-height: 70px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.timetable td:hover {
+    background: #f1f5f9;
+}
+
+.timetable td.has-subject {
+    background: #e0f2fe;
+    color: #0c4a6e;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    margin: 4px;
+    box-shadow: 0 2px 8px rgba(60, 60, 60, 0.08);
+}
+
+.timetable td.has-subject:hover {
+    background: #b3e5fc;
+    color: #0c4a6e;
+}
+
+/* 科目一覧 */
+.subjects-controls {
+    margin-bottom: 20px;
+}
+
+.subjects-list {
+    display: grid;
+    gap: 15px;
+}
+
+.subject-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(247, 250, 252, 0.25);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 8px;
+    border-left: 4px solid #007AFF;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: all 0.3s ease;
+}
+
+.subject-item:hover {
+    background: rgba(237, 242, 247, 0.35);
+    transform: translateX(5px);
+}
+
+.subject-item.detailed {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+}
+
+.subject-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.subject-info.detailed {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.subject-name {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1.1rem;
+    letter-spacing: -0.2px;
+}
+
+.subject-details {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.subject-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.subject-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.subject-detail-label {
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.subject-detail-value {
+    color: #475569;
+    font-weight: 400;
+    padding: 8px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border-left: 3px solid #64748b;
+    font-size: 0.95rem;
+}
+
+.subject-detail-value.empty {
+    color: #a0aec0;
+    font-style: italic;
+    font-weight: 300;
+}
+
+.subject-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* フッター */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 0.3px;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    section {
+        padding: 20px;
+    }
+    
+    .timetable th,
+    .timetable td {
+        padding: 10px 8px;
+        font-size: 0.9rem;
+    }
+    
+    .subject-item {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .subject-info {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+section {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* ローディング状態 */
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #718096;
+}
+
+/* 成功・エラーメッセージ */
+.message {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 400;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.message.success {
+    background: rgba(198, 246, 213, 0.8);
+    color: #22543d;
+    border: 1px solid rgba(154, 230, 180, 0.3);
+}
+
+.message.error {
+    background: rgba(254, 215, 215, 0.8);
+    color: #742a2a;
+    border: 1px solid rgba(254, 178, 178, 0.3);
+}
+
+/* モーダル */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.12);
+    animation: slideIn 0.3s ease-out;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.close {
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.close:hover {
+    opacity: 0.7;
+}
+
+.modal-body {
+    padding: 25px;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(203, 213, 225, 0.5);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    background: rgba(248, 250, 252, 0.8);
+}
+
+/* モーダルアニメーション */
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ドラッグ&ドロップ */
+.timetable td.has-subject {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.timetable td.has-subject:hover {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+.timetable td.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.timetable td.drop-target {
+    background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%) !important;
+    color: white;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+.timetable td.drop-target::after {
+    content: "ここに移動";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* 科目詳細グリッド */
+.subject-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.subject-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.subject-detail-label {
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.subject-detail-value {
+    color: #475569;
+    font-weight: 400;
+    padding: 8px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border-left: 3px solid #64748b;
+    font-size: 0.95rem;
+}
+
+.subject-detail-value.empty {
+    color: #a0aec0;
+    font-style: italic;
+    font-weight: 300;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .subject-detail-grid {
+        grid-template-columns: 1fr;
+    }
+} 
