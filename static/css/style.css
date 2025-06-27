@@ -536,3 +536,13 @@ section {
         grid-template-columns: 1fr;
     }
 } 
+
+/* subjectがあるときにだけ枠と背景を付ける */
+.now-cell.filled {
+    border: 2px solid rgba(0, 122, 255, 0.3); /* Appleブルー・半透明 */
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.25); /* ほのかに白っぽいガラス風 */
+    backdrop-filter: blur(10px) saturate(180%);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2); /* ふんわりと浮かせる */
+    transition: all 0.3s ease;
+}

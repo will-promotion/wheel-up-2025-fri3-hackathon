@@ -103,7 +103,7 @@ class TimetableApp {
     // 新しい科目を追加
     async handleAddSubject(event) {
         event.preventDefault();
-        
+
         const formData = new FormData(event.target);
         const subjectData = {
             name: formData.get('name'),
@@ -126,7 +126,7 @@ class TimetableApp {
         }
 
         // 同じ時間帯に既に科目があるかチェック
-        const existingSubject = this.subjects.find(subject => 
+        const existingSubject = this.subjects.find(subject =>
             subject.day === subjectData.day && subject.period === subjectData.period
         );
 
@@ -244,7 +244,7 @@ class TimetableApp {
     // 詳細表示の科目アイテム
     renderDetailedSubject(subject) {
         const details = [];
-        
+
         if (subject.room) details.push(['教室', subject.room]);
         if (subject.credits) details.push(['単位数', `${subject.credits}単位`]);
         if (subject.teacher) details.push(['教員', subject.teacher]);
@@ -291,40 +291,94 @@ class TimetableApp {
         const days = ['月', '火', '水', '木', '金', '土', '日'];
         const periods = 6;
 
+        const nowDay = this.getCurrentDay();
+        const nowPeriod = this.getCurrentPeriod();
+
         let tableHTML = '';
-        
+
         for (let period = 1; period <= periods; period++) {
             tableHTML += '<tr>';
             tableHTML += `<td><strong>${period}限</strong></td>`;
-            
+
             for (const day of days) {
                 const subject = this.subjects.find(s => s.day === day && s.period === period.toString());
-                
+                const isNow = (day === nowDay && period === nowPeriod);
+                const nowClass = isNow ? 'now-cell' : '';
+
                 if (subject) {
                     const tooltip = this.createTooltipText(subject);
-                    tableHTML += `<td class="has-subject" 
-                        data-subject-id="${subject.id}"
-                        data-day="${day}"
-                        data-period="${period}"
-                        title="${tooltip}">
-                        ${this.escapeHtml(subject.name)}
-                    </td>`;
+                    const isNow = (day === nowDay && period === nowPeriod);
+                    const nowClass = isNow ? 'now-cell' : '';
+
+                    tableHTML += `
+        <td class="has-subject" 
+            data-subject-id="${subject.id}" 
+            data-day="${day}" 
+            data-period="${period}" 
+            title="${tooltip}">
+            <div class="subject-box ${nowClass}">
+                ${this.escapeHtml(subject.name)}
+            </div>
+        </td>`;
                 } else {
-                    tableHTML += `<td data-day="${day}" data-period="${period}"></td>`;
+                    const isNow = (day === nowDay && period === nowPeriod);
+                    const nowClass = isNow ? 'now-cell' : '';
+                    tableHTML += `
+        <td class="${nowClass}" data-day="${day}" data-period="${period}"></td>`;
                 }
             }
-            
+
             tableHTML += '</tr>';
         }
 
         timetableBody.innerHTML = tableHTML;
         this.setupTimetableEvents();
+        this.markFilledNowCells();
+    }
+    markFilledNowCells() {
+        document.querySelectorAll('.now-cell').forEach(cell => {
+            const text = cell.textContent.trim();
+            if (text) {
+                cell.classList.add('filled');
+            } else {
+                cell.classList.remove('filled');
+            }
+        });
+    }
+    // 現在の曜日を取得（日=0, 月=1, ...）
+    getCurrentDay() {
+        const days = ['日', '月', '火', '水', '木', '金', '土'];
+        const today = new Date();
+        return days[today.getDay()];
     }
 
+    // 現在の時限を取得
+    getCurrentPeriod() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const totalMinutes = hours * 60 + minutes;
+
+        const schedule = [
+            { period: 1, start: 8 * 60 + 50, end: 10 * 60 + 30 },
+            { period: 2, start: 10 * 60 + 40, end: 12 * 60 + 20 },
+            { period: 3, start: 13 * 60 + 10, end: 14 * 60 + 50 },
+            { period: 4, start: 15 * 60 + 5, end: 16 * 60 + 45 },
+            { period: 5, start: 17 * 60, end: 18 * 60 + 40 },
+            { period: 6, start: 18 * 60 + 55, end: 20 * 60 + 35 }
+        ];
+
+        for (const entry of schedule) {
+            if (totalMinutes >= entry.start && totalMinutes <= entry.end) {
+                return entry.period;
+            }
+        }
+        return null;
+    }
     // 時間割のイベント設定
     setupTimetableEvents() {
         const cells = document.querySelectorAll('.timetable td');
-        
+
         cells.forEach(cell => {
             // クリックイベント（詳細表示）
             cell.addEventListener('click', (e) => {
@@ -340,7 +394,7 @@ class TimetableApp {
             // ドラッグ&ドロップ
             if (cell.classList.contains('has-subject')) {
                 cell.draggable = true;
-                
+
                 cell.addEventListener('dragstart', (e) => {
                     this.draggedSubject = {
                         id: cell.dataset.subjectId,
@@ -372,11 +426,11 @@ class TimetableApp {
             cell.addEventListener('drop', (e) => {
                 e.preventDefault();
                 cell.classList.remove('drop-target');
-                
+
                 if (this.draggedSubject) {
                     const newDay = cell.dataset.day;
                     const newPeriod = cell.dataset.period;
-                    
+
                     if (newDay && newPeriod) {
                         this.moveSubject(this.draggedSubject.id, newDay, newPeriod);
                     }
@@ -395,13 +449,13 @@ class TimetableApp {
     // 科目詳細モーダルを表示
     showSubjectModal(subject) {
         this.currentSubject = subject;
-        
+
         const modal = document.getElementById('subjectModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalBody = document.getElementById('modalBody');
-        
+
         modalTitle.textContent = subject.name;
-        
+
         const details = [
             ['曜日・時限', `${subject.day}曜日 ${subject.period}限`],
             ['教室', subject.room || '未設定'],
@@ -428,20 +482,20 @@ class TimetableApp {
                 ${detailsHTML}
             </div>
         `;
-        
+
         modal.style.display = 'block';
     }
 
     // ツールチップ用のテキストを作成
     createTooltipText(subject) {
         const parts = [subject.name];
-        
+
         if (subject.room) parts.push(`教室: ${subject.room}`);
         if (subject.teacher) parts.push(`教員: ${subject.teacher}`);
         if (subject.credits) parts.push(`単位数: ${subject.credits}`);
         if (subject.style) parts.push(`形態: ${subject.style}`);
         if (subject.ease) parts.push(`楽さ: ${subject.ease}/5`);
-        
+
         return parts.join('\n');
     }
 
@@ -483,4 +537,5 @@ class TimetableApp {
 let app;
 document.addEventListener('DOMContentLoaded', () => {
     app = new TimetableApp();
-}); 
+});
+
