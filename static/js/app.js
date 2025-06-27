@@ -43,6 +43,8 @@ class TimetableApp {
         const closeModal = () => {
             modal.style.display = 'none';
             this.currentSubject = null;
+            // モーダルを閉じた後にbodyクラスを削除
+            document.body.classList.remove('modal-open');
         };
 
         // イベントリスナー
@@ -70,6 +72,8 @@ class TimetableApp {
         if (this.currentSubject) {
             await this.deleteSubject(this.currentSubject.id);
             document.getElementById('subjectModal').style.display = 'none';
+            // モーダルを閉じた後にbodyクラスを削除
+            document.body.classList.remove('modal-open');
         }
     }
 
@@ -288,7 +292,7 @@ class TimetableApp {
         const timetableBody = document.getElementById('timetableBody');
         if (!timetableBody) return;
 
-        const days = ['月', '火', '水', '木', '金', '土', '日'];
+        const days = ['月', '火', '水', '木', '金', '土']; // 日曜日を削除
         const periods = 6;
 
         let tableHTML = '';
@@ -429,6 +433,8 @@ class TimetableApp {
             </div>
         `;
         
+        // モーダルを開く前にbodyにクラスを追加
+        document.body.classList.add('modal-open');
         modal.style.display = 'block';
     }
 
