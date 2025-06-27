@@ -489,4 +489,303 @@ class TimetableApp {
 let app;
 document.addEventListener('DOMContentLoaded', () => {
     app = new TimetableApp();
+});
+
+// モーダル関連の変数
+let currentDay = '';
+let currentPeriod = 0;
+
+// モーダルを開く
+function openModal(day, period) {
+    currentDay = day;
+    currentPeriod = period;
+    
+    const modal = document.getElementById('modal');
+    const subjectInput = document.getElementById('subjectInput');
+    
+    // 現在の教科名を表示
+    const cell = document.querySelector(`[data-day="${day}"][data-period="${period}"]`);
+    subjectInput.value = cell.textContent.trim();
+    
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// モーダルを閉じる
+function closeModal() {
+    const modal = document.getElementById('modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// 教科を保存
+function saveSubject() {
+    const subjectInput = document.getElementById('subjectInput');
+    const subject = subjectInput.value.trim();
+    
+    if (subject) {
+        const cell = document.querySelector(`[data-day="${currentDay}"][data-period="${currentPeriod}"]`);
+        cell.textContent = subject;
+        
+        // サーバーに保存
+        fetch('/update_schedule', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                day: currentDay,
+                period: currentPeriod,
+                subject: subject
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('時間割を更新しました');
+            }
+        })
+        .catch(error => {
+            console.error('エラー:', error);
+        });
+    }
+    
+    closeModal();
+}
+
+// 教科をクリア
+function clearSubject() {
+    const cell = document.querySelector(`[data-day="${currentDay}"][data-period="${currentPeriod}"]`);
+    cell.textContent = '';
+    
+    // サーバーに保存
+    fetch('/update_schedule', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            day: currentDay,
+            period: currentPeriod,
+            subject: ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('時間割を更新しました');
+        }
+    })
+    .catch(error => {
+        console.error('エラー:', error);
+    });
+    
+    closeModal();
+}
+
+// 教科検索機能
+function searchSubjects() {
+    const subjectKeyword = document.getElementById('subjectSearch').value;
+    const periodKeyword = document.getElementById('periodSearch').value;
+    const ondemandKeyword = document.getElementById('ondemandSearch').value;
+    
+    console.log('検索実行:', { subjectKeyword, periodKeyword, ondemandKeyword });
+    
+    fetch('/search_subjects', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            subject: subjectKeyword,
+            period: periodKeyword,
+            ondemand: ondemandKeyword
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('検索結果:', data);
+        if (data.success) {
+            displaySearchResults(data.results);
+        } else {
+            console.error('検索エラー:', data.error);
+            document.getElementById('searchResults').innerHTML = '<p>検索エラーが発生しました。</p>';
+        }
+    })
+    .catch(error => {
+        console.error('エラー:', error);
+        document.getElementById('searchResults').innerHTML = '<p>検索中にエラーが発生しました。</p>';
+    });
+}
+
+// 検索結果を表示
+function displaySearchResults(results) {
+    const resultsContainer = document.getElementById('searchResults');
+    console.log('displaySearchResults called with:', results);
+    console.log('resultsContainer:', resultsContainer);
+    
+    if (results.length === 0) {
+        resultsContainer.innerHTML = '<p>検索結果が見つかりませんでした。</p>';
+        return;
+    }
+    
+    let html = `<h3>検索結果 (${results.length}件)</h3>`;
+    html += '<div class="results-list">';
+    
+    results.forEach((subject, index) => {
+        // HTMLエスケープ処理
+        const name = escapeHtml(subject.name || '');
+        const teacher = escapeHtml(subject.teacher || '');
+        const room = escapeHtml(subject.room || '');
+        const credits = escapeHtml(subject.credits || '');
+        const description = escapeHtml(subject.description || '');
+        
+        console.log('Processing subject:', subject);
+        console.log('Escaped name:', name);
+        
+        html += `
+            <div class="result-item">
+                <h4>${name}</h4>
+                <p><strong>担当教員:</strong> ${teacher}</p>
+                <p><strong>曜日・時限:</strong> ${subject.day}曜日 ${subject.period}限</p>
+                <p><strong>教室:</strong> ${room}</p>
+                <p><strong>単位数:</strong> ${credits}</p>
+                <p><strong>説明:</strong> ${description}</p>
+                <button type="button" class="add-button" data-name="${name}" data-day="${subject.day}" data-period="${subject.period}">
+                    時間割に追加
+                </button>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    resultsContainer.innerHTML = html;
+    
+    // ボタンにイベントリスナーを追加
+    const addButtons = resultsContainer.querySelectorAll('.add-button');
+    addButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault(); // デフォルトの動作を防止
+            e.stopPropagation(); // イベントの伝播を停止
+            
+            const name = this.getAttribute('data-name');
+            const day = this.getAttribute('data-day');
+            const period = this.getAttribute('data-period');
+            console.log('Button clicked:', { name, day, period });
+            
+            // ボタンの表示を変更
+            this.disabled = true;
+            this.textContent = '追加中...';
+            
+            // タイムアウトを設定（5秒後に強制的に元に戻す）
+            const timeoutId = setTimeout(() => {
+                this.disabled = false;
+                this.textContent = '時間割に追加';
+                showMessage('タイムアウトが発生しました', 'error');
+            }, 5000);
+            
+            addToSchedule(name, day, period, timeoutId, this);
+        });
+    });
+    
+    console.log('Added event listeners to', addButtons.length, 'buttons');
+}
+
+// HTMLエスケープ関数
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 検索結果から時間割に追加
+function addToSchedule(subjectName, day, period, timeoutId, button) {
+    console.log('時間割に追加:', { subjectName, day, period });
+    
+    // ボタンを元に戻す関数
+    const resetButton = () => {
+        if (button) {
+            button.disabled = false;
+            button.textContent = '時間割に追加';
+        }
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+    };
+    
+    if (day && period) {
+        // 時限を0ベースに変換（1限→0, 2限→1, ...）
+        const periodIndex = parseInt(period) - 1;
+        console.log('変換後の時限:', periodIndex);
+        
+        const cell = document.querySelector(`[data-day="${day}"][data-period="${periodIndex}"]`);
+        if (cell) {
+            cell.textContent = subjectName;
+            console.log('セルを更新:', cell);
+            
+            // サーバーに保存
+            fetch('/update_schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    day: day,
+                    period: periodIndex,
+                    subject: subjectName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('サーバー応答:', data);
+                resetButton(); // ボタンを元に戻す
+                
+                if (data.success) {
+                    console.log('時間割に追加しました');
+                    showMessage('時間割に追加しました', 'success');
+                } else {
+                    console.error('エラー:', data.message);
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('エラー:', error);
+                resetButton(); // ボタンを元に戻す
+                showMessage('時間割の更新に失敗しました', 'error');
+            });
+        } else {
+            console.error('セルが見つかりません:', `[data-day="${day}"][data-period="${periodIndex}"]`);
+            resetButton(); // ボタンを元に戻す
+            showMessage('指定された時間割のセルが見つかりません', 'error');
+        }
+    } else {
+        console.error('無効なデータ:', { day, period });
+        resetButton(); // ボタンを元に戻す
+        showMessage('無効なデータです', 'error');
+    }
+}
+
+// モーダル外クリックで閉じる
+window.onclick = function(event) {
+    const modal = document.getElementById('modal');
+    if (event.target === modal) {
+        closeModal();
+    }
+}
+
+// Enterキーで検索
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInputs = ['subjectSearch', 'periodSearch', 'ondemandSearch'];
+    
+    searchInputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchSubjects();
+                }
+            });
+        }
+    });
 }); 
