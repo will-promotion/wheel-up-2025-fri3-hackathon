@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from gensim.models import Word2Vec
 from sklearn.metrics.pairwise import cosine_similarity
-from reccomend import search_similarity
+from recommend import search_similarity
 from sql import init_db, get_all_subjects, add_subject_web, delete_subject, list_subjects, update_subject_time
 
 app = Flask(__name__)
