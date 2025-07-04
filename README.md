@@ -277,4 +277,14 @@ SELECT * FROM subjects;
 
 ---
 
+### 3. 事前学習済み Word2Vec モデルの取得
+講義の類似度計算には、日本語 Wikipedia で学習された Word2Vec ベクトルを利用します。
+
+1. 次の Google Drive リンクから[モデル](https://drive.google.com/file/d/0ByFQ96A4DgSPUm9wVWRLdm5qbmc/view)をダウンロードします  
+2. ダウンロードしたファイル（`model.vec`）をプロジェクト直下に配置します。
+3. `recommend.py` の `VEC_PATH` 変数がそのファイルを指すように設定してください（既定は `model.vec`）。
+
+> ⚠️ ダウンロードには Google アカウントが必要な場合があります。  
+> ⚠️ ファイルサイズが大きいため、安定したネットワーク環境でダウンロードしてください。
+
 **Happy Coding! 🚀**
