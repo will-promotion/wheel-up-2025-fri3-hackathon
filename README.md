@@ -81,7 +81,7 @@ pip install -r requirements.txt
 ```
 
 ### 3. 事前学習済み Word2Vec モデルの取得
-講義の類似度計算には、日本語 Wikipedia で学習された Word2Vec ベクトルを利用します。
+講義の類似度計算には、事前に学習した Word2Vec ベクトルを利用します。
 
 1. [モデル](https://drive.google.com/file/d/0ByFQ96A4DgSPUm9wVWRLdm5qbmc/view)をダウンロードします  
 2. ダウンロードしたファイル（`model.vec`）をプロジェクト直下に配置します。
