@@ -60,21 +60,35 @@ def search_subjects():
         subject_keyword = data.get('subject', '')
         period_keyword = data.get('period', '')
         ondemand_keyword = data.get('ondemand', '')
-        
-        print(f"検索条件: 科目={subject_keyword}, 曜日・時限={period_keyword}, 授業方法={ondemand_keyword}")
-        
-        # search.pyの関数を呼び出し
+        try:
+            page = int(data.get('page') or 1)
+        except Exception:
+            page = 1
+        try:
+            per_page = int(data.get('per_page') or 10)
+        except Exception:
+            per_page = 10
         results = search_subjects_from_csv(subject_keyword, period_keyword, ondemand_keyword)
-        
-        print(f"検索結果数: {len(results)}")
-        
+        total_count = len(results)
+        total_pages = (total_count + per_page - 1) // per_page
+        start = (page - 1) * per_page
+        end = start + per_page
+        paged_results = results[start:end]
+        if total_count > 15:
+            return jsonify({
+                'success': False,
+                'error': '検索結果が多すぎます。条件を絞ってください（最大9件まで）。',
+                'results': []
+            })
         return jsonify({
             'success': True,
-            'results': results,
-            'count': len(results)
+            'results': paged_results,
+            'count': total_count,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages
         })
     except Exception as e:
-        print(f"検索エラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({

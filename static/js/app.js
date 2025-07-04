@@ -494,6 +494,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // モーダル関連の変数
 let currentDay = '';
 let currentPeriod = 0;
+let currentPage = 1;
+let totalPages = 1;
+let lastSearchParams = {};
 
 // モーダルを開く
 function openModal(day, period) {
@@ -584,13 +587,19 @@ function clearSubject() {
 }
 
 // 教科検索機能
-function searchSubjects() {
-    const subjectKeyword = document.getElementById('subjectSearch').value;
-    const periodKeyword = document.getElementById('periodSearch').value;
-    const ondemandKeyword = document.getElementById('ondemandSearch').value;
-    
-    console.log('検索実行:', { subjectKeyword, periodKeyword, ondemandKeyword });
-    
+function searchSubjects(page = 1) {
+    const perPage = 10;
+    let subjectKeyword, periodKeyword, ondemandKeyword;
+    if (page === 1 || !lastSearchParams.subject) {
+        subjectKeyword = document.getElementById('subjectSearch').value;
+        periodKeyword = document.getElementById('periodSearch').value;
+        ondemandKeyword = document.getElementById('ondemandSearch').value;
+        lastSearchParams = { subject: subjectKeyword, period: periodKeyword, ondemand: ondemandKeyword };
+    } else {
+        subjectKeyword = lastSearchParams.subject;
+        periodKeyword = lastSearchParams.period;
+        ondemandKeyword = lastSearchParams.ondemand;
+    }
     fetch('/search_subjects', {
         method: 'POST',
         headers: {
@@ -599,50 +608,40 @@ function searchSubjects() {
         body: JSON.stringify({
             subject: subjectKeyword,
             period: periodKeyword,
-            ondemand: ondemandKeyword
+            ondemand: ondemandKeyword,
+            page: page,
+            per_page: perPage
         })
     })
     .then(response => response.json())
     .then(data => {
-        console.log('検索結果:', data);
         if (data.success) {
-            displaySearchResults(data.results);
+            currentPage = data.page;
+            totalPages = data.total_pages;
+            displaySearchResults(data.results, data.count, data.page, data.total_pages);
         } else {
-            console.error('検索エラー:', data.error);
             document.getElementById('searchResults').innerHTML = '<p>検索エラーが発生しました。</p>';
         }
     })
     .catch(error => {
-        console.error('エラー:', error);
         document.getElementById('searchResults').innerHTML = '<p>検索中にエラーが発生しました。</p>';
     });
 }
 
-// 検索結果を表示
-function displaySearchResults(results) {
+function displaySearchResults(results, count, page, totalPages) {
     const resultsContainer = document.getElementById('searchResults');
-    console.log('displaySearchResults called with:', results);
-    console.log('resultsContainer:', resultsContainer);
-    
     if (results.length === 0) {
         resultsContainer.innerHTML = '<p>検索結果が見つかりませんでした。</p>';
         return;
     }
-    
-    let html = `<h3>検索結果 (${results.length}件)</h3>`;
+    let html = `<h3>検索結果 (${count}件)</h3>`;
     html += '<div class="results-list">';
-    
     results.forEach((subject, index) => {
-        // HTMLエスケープ処理
         const name = escapeHtml(subject.name || '');
         const teacher = escapeHtml(subject.teacher || '');
         const room = escapeHtml(subject.room || '');
         const credits = escapeHtml(subject.credits || '');
         const description = escapeHtml(subject.description || '');
-        
-        console.log('Processing subject:', subject);
-        console.log('Escaped name:', name);
-        
         html += `
             <div class="result-item">
                 <h4>${name}</h4>
@@ -657,45 +656,58 @@ function displaySearchResults(results) {
             </div>
         `;
     });
-    
     html += '</div>';
+    html += renderPagination(page, totalPages);
     resultsContainer.innerHTML = html;
-    
-    // 既存のイベントリスナーを削除（重複を防ぐため）
-    const existingButtons = resultsContainer.querySelectorAll('.add-button');
-    existingButtons.forEach(button => {
-        button.replaceWith(button.cloneNode(true));
-    });
-    
-    // ボタンにイベントリスナーを追加
     const addButtons = resultsContainer.querySelectorAll('.add-button');
     addButtons.forEach(button => {
         button.addEventListener('click', function(e) {
-            e.preventDefault(); // デフォルトの動作を防止
-            e.stopPropagation(); // イベントの伝播を停止
-            
-            const clickedButton = this; // クリックされたボタンを明示的に保存
+            e.preventDefault();
+            e.stopPropagation();
+            const clickedButton = this;
             const name = clickedButton.getAttribute('data-name');
             const day = clickedButton.getAttribute('data-day');
             const period = clickedButton.getAttribute('data-period');
-            console.log('Button clicked:', { name, day, period });
-            
-            // ボタンの表示を変更
             clickedButton.disabled = true;
             clickedButton.textContent = '追加中...';
-            
-            // タイムアウトを設定（5秒後に強制的に元に戻す）
             const timeoutId = setTimeout(() => {
                 clickedButton.disabled = false;
                 clickedButton.textContent = '時間割に追加';
                 showMessage('タイムアウトが発生しました', 'error');
             }, 5000);
-            
             addToSchedule(name, day, period, timeoutId, clickedButton);
         });
     });
-    
-    console.log('Added event listeners to', addButtons.length, 'buttons');
+    const pageLinks = resultsContainer.querySelectorAll('.pagination-link');
+    pageLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = parseInt(this.getAttribute('data-page'));
+            if (!isNaN(page)) {
+                searchSubjects(page);
+            }
+        });
+    });
+}
+
+function renderPagination(page, totalPages) {
+    if (totalPages <= 1) return '';
+    let html = '<div class="pagination">';
+    if (page > 1) {
+        html += `<a href="#" class="pagination-link" data-page="${page - 1}">前へ</a>`;
+    }
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === page) {
+            html += `<span class="current-page">${i}</span>`;
+        } else {
+            html += `<a href="#" class="pagination-link" data-page="${i}">${i}</a>`;
+        }
+    }
+    if (page < totalPages) {
+        html += `<a href="#" class="pagination-link" data-page="${page + 1}">次へ</a>`;
+    }
+    html += '</div>';
+    return html;
 }
 
 // HTMLエスケープ関数
