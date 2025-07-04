@@ -661,6 +661,12 @@ function displaySearchResults(results) {
     html += '</div>';
     resultsContainer.innerHTML = html;
     
+    // 既存のイベントリスナーを削除（重複を防ぐため）
+    const existingButtons = resultsContainer.querySelectorAll('.add-button');
+    existingButtons.forEach(button => {
+        button.replaceWith(button.cloneNode(true));
+    });
+    
     // ボタンにイベントリスナーを追加
     const addButtons = resultsContainer.querySelectorAll('.add-button');
     addButtons.forEach(button => {
@@ -668,23 +674,24 @@ function displaySearchResults(results) {
             e.preventDefault(); // デフォルトの動作を防止
             e.stopPropagation(); // イベントの伝播を停止
             
-            const name = this.getAttribute('data-name');
-            const day = this.getAttribute('data-day');
-            const period = this.getAttribute('data-period');
+            const clickedButton = this; // クリックされたボタンを明示的に保存
+            const name = clickedButton.getAttribute('data-name');
+            const day = clickedButton.getAttribute('data-day');
+            const period = clickedButton.getAttribute('data-period');
             console.log('Button clicked:', { name, day, period });
             
             // ボタンの表示を変更
-            this.disabled = true;
-            this.textContent = '追加中...';
+            clickedButton.disabled = true;
+            clickedButton.textContent = '追加中...';
             
             // タイムアウトを設定（5秒後に強制的に元に戻す）
             const timeoutId = setTimeout(() => {
-                this.disabled = false;
-                this.textContent = '時間割に追加';
+                clickedButton.disabled = false;
+                clickedButton.textContent = '時間割に追加';
                 showMessage('タイムアウトが発生しました', 'error');
             }, 5000);
             
-            addToSchedule(name, day, period, timeoutId, this);
+            addToSchedule(name, day, period, timeoutId, clickedButton);
         });
     });
     
@@ -699,13 +706,21 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// 全角数字を半角数字に変換する関数
+function convertFullWidthToHalfWidth(str) {
+    if (!str) return str;
+    return str.replace(/[０-９]/g, function(s) {
+        return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+}
+
 // 検索結果から時間割に追加
 function addToSchedule(subjectName, day, period, timeoutId, button) {
     console.log('時間割に追加:', { subjectName, day, period });
     
     // ボタンを元に戻す関数
     const resetButton = () => {
-        if (button) {
+        if (button && button instanceof HTMLElement) {
             button.disabled = false;
             button.textContent = '時間割に追加';
         }
@@ -715,11 +730,22 @@ function addToSchedule(subjectName, day, period, timeoutId, button) {
     };
     
     if (day && period) {
+        // 全角数字を半角数字に変換
+        const normalizedPeriod = convertFullWidthToHalfWidth(period);
+        console.log('正規化された時限:', normalizedPeriod);
+        
         // 時限を0ベースに変換（1限→0, 2限→1, ...）
-        const periodIndex = parseInt(period) - 1;
+        const periodIndex = parseInt(normalizedPeriod) - 1;
         console.log('変換後の時限:', periodIndex);
         
-        const cell = document.querySelector(`[data-day="${day}"][data-period="${periodIndex}"]`);
+        if (isNaN(periodIndex) || periodIndex < 0 || periodIndex > 5) {
+            console.error('無効な時限:', periodIndex);
+            resetButton();
+            showMessage('無効な時限です', 'error');
+            return;
+        }
+        
+        const cell = document.querySelector('.schedule-table [data-day="' + day + '"][data-period="' + periodIndex + '"]');
         if (cell) {
             cell.textContent = subjectName;
             console.log('セルを更新:', cell);
@@ -777,7 +803,6 @@ window.onclick = function(event) {
 // Enterキーで検索
 document.addEventListener('DOMContentLoaded', function() {
     const searchInputs = ['subjectSearch', 'periodSearch', 'ondemandSearch'];
-    
     searchInputs.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
@@ -788,4 +813,39 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-}); 
+
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        cell.addEventListener('click', function(e) {
+            const day = this.getAttribute('data-day');
+            const period = this.getAttribute('data-period');
+            const subject = this.textContent.trim();
+            if (!subject) return;
+            fetch(`/get_subject_detail?name=${encodeURIComponent(subject)}&day=${encodeURIComponent(day)}&period=${encodeURIComponent(period)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        showDetailModalTable(data.data);
+                    }
+                });
+        });
+    });
+});
+
+function showDetailModalTable(detail) {
+    const modal = document.getElementById('detail-modal');
+    const content = document.getElementById('detail-modal-content');
+    let html = '<table style="width:100%;word-break:break-all">';
+    for (const key in detail) {
+        html += `<tr><th style='text-align:left;width:30%'>${key}</th><td>${detail[key]}</td></tr>`;
+    }
+    html += '</table>';
+    content.innerHTML = html;
+    modal.style.display = 'block';
+    document.body.classList.add('modal-open');
+}
+
+function closeDetailModal() {
+    const modal = document.getElementById('detail-modal');
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+} 

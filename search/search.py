@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import os
+import ast
 
 # CSVファイルのパス（絶対パスに修正）
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -42,10 +43,28 @@ def search_subjects_from_csv(subject_keyword='', period_keyword='', ondemand_key
             elif '土' in period_info:
                 day = '土'
             
-            # 時限の抽出（数字を探す）
-            period_match = re.search(r'(\d+)', period_info)
-            if period_match:
-                period = period_match.group(1)
+            # 時限の抽出（CSVの時限列から直接取得）
+            try:
+                time_period = row.get('時限', '')
+                if time_period and time_period != 'nan':
+                    # 配列形式の場合は最初の要素を取得
+                    if isinstance(time_period, str) and time_period.startswith('['):
+                        try:
+                            period_list = ast.literal_eval(time_period)
+                            if period_list and len(period_list) > 0:
+                                period = str(period_list[0])
+                        except:
+                            pass
+                    else:
+                        period = str(time_period)
+            except:
+                pass
+            
+            # 時限が見つからない場合は学期曜日時限から抽出を試行
+            if not period:
+                period_match = re.search(r'(\d+)', period_info)
+                if period_match:
+                    period = period_match.group(1)
             
             subject_data = {
                 'name': row.get('科目名', ''),

@@ -1004,4 +1004,12 @@ h1 {
         padding: 20px;
         width: 95%;
     }
+}
+
+.schedule-table th, .schedule-table td {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+    text-align: center;
+    word-break: break-all;
 } 

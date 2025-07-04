@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify
 import json
 import sys
 import os
+import pandas as pd
+import ast
 
 # search.pyのパスを追加
 sys.path.append(os.path.join(os.path.dirname(__file__), 'search'))
@@ -84,6 +86,58 @@ def search_subjects():
 @app.route('/get_schedule', methods=['GET'])
 def get_schedule():
     return jsonify(schedule_data)
+
+@app.route('/get_subject_detail')
+def get_subject_detail():
+    name = request.args.get('name', '')
+    day = request.args.get('day', '')
+    period = request.args.get('period', '')
+    try:
+        csv_path = os.path.join(os.path.dirname(__file__), 'search', 'with_class_method.csv')
+        df = pd.read_csv(csv_path)
+        result = None
+        for _, row in df.iterrows():
+            # 科目名一致
+            if str(row.get('科目名', '')).strip() != name.strip():
+                continue
+            # 曜日一致
+            period_info = str(row.get('学期曜日時限', ''))
+            day_match = False
+            if day in period_info:
+                day_match = True
+            if not day_match:
+                continue
+            # 時限一致
+            period_match = False
+            # 時限列が配列形式の場合も考慮
+            time_period = row.get('時限', '')
+            if time_period and time_period != 'nan':
+                if isinstance(time_period, str) and time_period.startswith('['):
+                    try:
+                        period_list = ast.literal_eval(time_period)
+                        if period_list and str(period_list[0]) == str(int(period)+1):
+                            period_match = True
+                    except:
+                        pass
+                else:
+                    if str(time_period) == str(int(period)+1):
+                        period_match = True
+            else:
+                # 学期曜日時限から数字抽出
+                import re
+                m = re.search(r'(\d+)', period_info)
+                if m and m.group(1) == str(int(period)+1):
+                    period_match = True
+            if not period_match:
+                continue
+            result = row.to_dict()
+            break
+        if result:
+            return jsonify({'success': True, 'data': result})
+        else:
+            return jsonify({'success': False, 'data': None})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 

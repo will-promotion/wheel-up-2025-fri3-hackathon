@@ -56,16 +56,15 @@
         </div>
     </div>
 
-    <!-- モーダル -->
-    <div id="modal" class="modal">
+    <!-- 詳細モーダル -->
+    <div id="detail-modal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h3>教科を編集</h3>
+            <span class="close" onclick="closeDetailModal()">&times;</span>
+            <h3>科目詳細</h3>
             <div class="modal-body">
-                <input type="text" id="subjectInput" placeholder="教科名を入力">
+                <div id="detail-modal-content"></div>
                 <div class="modal-buttons">
-                    <button onclick="saveSubject()">保存</button>
-                    <button onclick="clearSubject()">クリア</button>
+                    <button onclick="closeDetailModal()">閉じる</button>
                 </div>
             </div>
         </div>
